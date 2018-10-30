@@ -135,8 +135,8 @@ public class MipHandler {
 
     private String buildMipSdkCall(final ProtectionRequest request, final File toProtect) {
         final StringBuilder sdkCall = new StringBuilder();
-        // FIXME properties
-        sdkCall.append("C:\\Users\\kazimmer\\mip_sdk_file_win32_1.0.46\\bins\\release\\amd64\\file_sample.exe ");
+        sdkCall.append(protectionServiceProperties.getFileApiCli());
+        sdkCall.append(" ");
 
         sdkCall.append("--username ");
         sdkCall.append(protectionServiceProperties.getUser());

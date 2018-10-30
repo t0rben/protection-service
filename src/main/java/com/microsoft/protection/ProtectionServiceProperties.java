@@ -21,6 +21,9 @@ public class ProtectionServiceProperties {
     @NotBlank
     private String protectionBaseurl = "https://aadrm.com";
 
+    @NotBlank
+    private String fileApiCli;
+
     private AAD aad = new AAD();
 
     @Getter
