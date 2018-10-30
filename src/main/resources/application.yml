@@ -1,0 +1,14 @@
+spring:
+    servlet:
+        multipart:
+            max-file-size: -1
+            max-request-size : -1
+
+com:
+    microsoft:
+        protection:
+            aad:
+                tenant: 
+                client-id: 
+                client-secret: 
+            user: 

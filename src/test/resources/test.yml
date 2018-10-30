@@ -1,0 +1,12 @@
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License
+#
+
+# Logging START - activate to see request/response details
+logging:
+	level:
+		com:
+			microsoft:
+				protection: DEBUG
+# Logging END
