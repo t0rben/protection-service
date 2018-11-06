@@ -4,8 +4,6 @@
  */
 package com.microsoft.protection.controller;
 
-import java.util.stream.Collectors;
-
 import javax.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
@@ -19,12 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.microsoft.protection.controller.model.ProtectionRequestGet;
 import com.microsoft.protection.controller.model.ProtectionRequestPost;
 import com.microsoft.protection.data.ProtectionRequestRepository;
 import com.microsoft.protection.data.model.ProtectionRequest;
-import com.microsoft.protection.data.model.ProtectionRequest.Right;
 
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
@@ -34,7 +30,6 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 @RequestMapping("/v1/protection")
 public class ProtectionRequestController {
-    private static final Splitter SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings();
     private static final Joiner JOINER = Joiner.on(",").skipNulls();
 
     private final ProtectionRequestRepository protectionRequestRepository;
@@ -54,10 +49,7 @@ public class ProtectionRequestController {
             @RequestParam(name = "user") final String user) {
         final ProtectionRequest toCreate = new ProtectionRequest();
         toCreate.setCorrelationId(correlationId);
-        // FIXME
-        if (rights != null) {
-            toCreate.setRights(SPLITTER.splitToList(rights).stream().map(Right::valueOf).collect(Collectors.toSet()));
-        }
+        toCreate.setRightsAsString(rights);
         toCreate.setUser(user);
         toCreate.setFileName(file.getOriginalFilename());
 
@@ -70,8 +62,7 @@ public class ProtectionRequestController {
             @Valid @RequestBody final ProtectionRequestPost request) {
         final ProtectionRequest toCreate = new ProtectionRequest();
         toCreate.setCorrelationId(request.getCorrelationId());
-        toCreate.setRights(
-                SPLITTER.splitToList(request.getRights()).stream().map(Right::valueOf).collect(Collectors.toSet()));
+        toCreate.setRightsAsString(request.getRights());
         toCreate.setUrl(request.getUrl());
         toCreate.setUser(request.getUser());
         toCreate.setFileName(request.getFileName());
