@@ -53,7 +53,7 @@ Now generate a client secret for you app:
 
 1. First you have to get a token from AAD. Here you will need your AAD tenant/directory, e.g. `company.onmicrosoft.com` and application ID and client secret as noted above.
 
-![POST for AAD access token][token.png]
+![POST for AAD access token](token.png)
 
 2. The response Json document contains the OAuth2 `access_token`.
 3. Run now `file_sample`, e.g. `./file_sample --username user_that_does_protection@contoso.com --rights READ,VIEW --protect user_that_can_read@contoso.com --file UnProtected.docx --clientid YOUR_AAD_APPLICATION_ID --protectiontoken YOUR_ACCESS_TOKEN`.
