@@ -17,6 +17,10 @@ Authentication against the Azure AD tenant requires creating a native applicatio
 
 The **Registered app** blade should now be displayed.
 
+Extract the `Application ID` from the apps overview page. You will need it later.
+
+Now add MIP permissions to you application:
+
 1. Click **Settings**
 2. Click **Required Permissions**
 3. Click **Add**
@@ -31,6 +35,33 @@ The **Registered app** blade should now be displayed.
 12. Click **Select** then **Done**
 13. In the **Required Permissions** blade, click **Grant Permissions** and confirm.
 
-## Download MIP SDK and run file_sample
+Now generate a client secret for you app:
 
-Go to https://aka.ms/MIPSDKBinaries and download the SDK for your respecive platform
+1. Click **Settings**
+2. Click **Keys**
+3. Fill a **Password**
+4. Click **Save**
+5. Copy the **Value** after save. You will need it later.
+
+## Download and unpack MIP SDK
+
+1. Go to https://aka.ms/MIPSDKBinaries and download the SDK for your respecive platform
+2. Inside the download ZIP unpack the file_sdk zip.
+3. Go to file folder for you HW platform, e.g. `mip_sdk_file_macos_1.0.49/bins/release/x86_64`.
+
+## Run file sample in your ADD and MIP environment
+
+1. First you have to get a token from AAD. Here you will need your AAD tenant/directory, e.g. `company.onmicrosoft.com` and application ID and client secret as noted above.
+
+![POST for AAD access token][token.png]
+
+2. The response Json document contains the OAuth2 `access_token`.
+3. Run now `file_sample`, e.g. `./file_sample --username user_that_does_protection@contoso.com --rights READ,VIEW --protect user_that_can_read@contoso.com --file UnProtected.docx --clientid YOUR_AAD_APPLICATION_ID --protectiontoken YOUR_ACCESS_TOKEN`.
+
+In this case the response should contain something like:
+
+```bash
+New file created: UnProtected_modified.docx
+```
+
+Now open the file either with office or in case of PDF or image file with [AIP viewer](https://www.microsoft.com/en-us/download/details.aspx?id=54536) as user `user_that_can_read@contoso.com`.

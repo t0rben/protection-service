@@ -54,7 +54,7 @@ public class ProtectionRequest extends BaseEntity {
     @URL(regexp = "^(http|https)")
     private String url;
 
-    private Set<Right> rights = Set.of(Right.READ);
+    private Set<Right> rights = Set.of(Right.READ, Right.VIEW);
 
     // FIXME: implement
     // private Date validUntil
@@ -80,7 +80,7 @@ public class ProtectionRequest extends BaseEntity {
     }
 
     public enum Right {
-        READ;
+        READ, VIEW;
     }
 
     public enum Status {
