@@ -1,6 +1,12 @@
 /target/
 !.mvn/wrapper/maven-wrapper.jar
 
+### Mac OS
+.DS_Store
+
+### MIP SDK
+/mip_sdk*
+
 ### STS ###
 .apt_generated
 .classpath

@@ -54,6 +54,8 @@ public class MipHandler {
     private final ThreadPoolExecutor threadPoolExecutor;
     private final ProtectionServiceProperties protectionServiceProperties;
 
+    // TODO create scheduler to pick up unfinished requests, use lock service to
+    // synchronize
     // FIXME reduce duplicate code
     @Async
     void protect(final ProtectionRequest request, final MultipartFile file) {
