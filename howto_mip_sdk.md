@@ -1,5 +1,7 @@
 # HowTo verify MIP SDK access
 
+The following guide describes the necessary steps to create an application in your Azure Active Directory and use it to access Microsoft Information Protection service by SDK.
+
 ## Create an Azure AD App Registration
 
 Authentication against the Azure AD tenant requires creating a native application registration. The client ID created in this step is used in a later step to generate an OAuth2 token.
