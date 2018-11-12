@@ -5,6 +5,7 @@
 package com.microsoft.protection.data.model;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -14,6 +15,10 @@ import javax.validation.constraints.Size;
 import org.hibernate.validator.constraints.URL;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -24,6 +29,10 @@ import lombok.ToString;
 @Setter
 @ToString
 public class ProtectionRequest extends BaseEntity {
+
+    private static final Splitter SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings();
+    private static final Joiner JOINER = Joiner.on(",").skipNulls();
+
     private static final long serialVersionUID = 1L;
 
     @NotBlank
@@ -50,10 +59,20 @@ public class ProtectionRequest extends BaseEntity {
     // FIXME: implement
     // private Date validUntil
 
-    public void setRights(final Set<Right> rights) {
-        if (!CollectionUtils.isEmpty(rights)) {
-            this.rights = rights;
+    public void setRightsAsString(final String rights) {
+
+        if (StringUtils.hasLength(rights)) {
+            final Set<Right> split = SPLITTER.splitToList(rights).stream().map(Right::valueOf)
+                    .collect(Collectors.toSet());
+
+            if (!CollectionUtils.isEmpty(split)) {
+                this.rights = split;
+            }
         }
+    }
+
+    public String getRightsAsString() {
+        return JOINER.join(rights);
     }
 
     public void setFileName(final String fileName) {

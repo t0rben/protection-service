@@ -143,8 +143,10 @@ public class MipHandler {
         sdkCall.append("--username ");
         sdkCall.append(protectionServiceProperties.getUser());
         sdkCall.append(" ");
-        // FIXME from request
-        sdkCall.append("--rights READ ");
+
+        sdkCall.append("--rights ");
+        sdkCall.append(request.getRightsAsString());
+        sdkCall.append(" ");
 
         sdkCall.append("--protect ");
         sdkCall.append(request.getUser());
