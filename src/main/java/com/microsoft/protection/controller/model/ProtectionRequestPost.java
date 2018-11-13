@@ -4,9 +4,12 @@
  */
 package com.microsoft.protection.controller.model;
 
+import org.springframework.hateoas.ResourceSupport;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -20,12 +23,21 @@ import lombok.Setter;
 @Getter
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ProtectionRequestPost {
+public class ProtectionRequestPost extends ResourceSupport {
 
+    @JsonProperty
     private String url;
+
+    @JsonProperty
     private String user;
+
+    @JsonProperty
     private String correlationId;
+
+    @JsonProperty
     private String rights;
+
+    @JsonProperty
     private String fileName;
 
     // FIXME implement

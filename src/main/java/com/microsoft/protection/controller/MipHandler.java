@@ -5,6 +5,7 @@
 package com.microsoft.protection.controller;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,6 +37,7 @@ import com.microsoft.aad.adal4j.AuthenticationContext;
 import com.microsoft.aad.adal4j.AuthenticationResult;
 import com.microsoft.aad.adal4j.ClientCredential;
 import com.microsoft.protection.ProtectionServiceProperties;
+import com.microsoft.protection.data.AzureStorageRepository;
 import com.microsoft.protection.data.ProtectionRequestRepository;
 import com.microsoft.protection.data.model.ProtectionRequest;
 import com.microsoft.protection.data.model.ProtectionRequest.Status;
@@ -54,21 +56,48 @@ public class MipHandler {
     private final ThreadPoolExecutor threadPoolExecutor;
     private final ProtectionServiceProperties protectionServiceProperties;
 
+    private final AzureStorageRepository azureStorageRepository;
+
     // TODO create scheduler to pick up unfinished requests, use lock service to
     // synchronize
-    // FIXME reduce duplicate code
     @Async
     void protect(final ProtectionRequest request, final MultipartFile file) {
+        Assert.notNull(file, "File must not be null!");
 
-        final File myTempDir = Files.createTempDir();
-        final File toProtect = new File(myTempDir, request.getFileName());
+        copyAndprotect(request, file);
+    }
 
+    @Async
+    void protect(final ProtectionRequest request) {
+        Assert.hasLength(request.getUrl(), "URL must not be empty");
+
+        copyAndprotect(request, null);
+    }
+
+    private void copyMultipart(final MultipartFile file, final File toProtect)
+            throws IOException, FileNotFoundException {
         try (final InputStream upload = file.getInputStream()) {
             try (OutputStream temp = new FileOutputStream(toProtect)) {
                 ByteStreams.copy(upload, temp);
             }
+        }
+    }
 
-            protect(request, toProtect);
+    void copyAndprotect(final ProtectionRequest request, final MultipartFile file) {
+
+        final File myTempDir = Files.createTempDir();
+        final File toProtect = new File(myTempDir, request.getFileName());
+
+        try {
+
+            if (file == null) {
+                copyFromUrl(request, toProtect);
+            } else {
+                copyMultipart(file, toProtect);
+            }
+
+            final File protectedFile = protect(request, toProtect);
+            azureStorageRepository.store(protectedFile, file.getContentType(), request.getId());
             request.setStatus(Status.COMPLETE);
         } catch (final Exception e) {
             log.error("Failed to protect " + request, e);
@@ -79,24 +108,9 @@ public class MipHandler {
         protectionRequestRepository.save(request).block();
     }
 
-    @Async
-    void protect(final ProtectionRequest request) {
-        Assert.hasLength(request.getUrl(), "URL must not be empty");
-
-        final File myTempDir = Files.createTempDir();
-        final File toProtect = new File(myTempDir, request.getFileName());
-
-        try {
-            FileUtils.copyURLToFile(new URL(request.getUrl()), toProtect, 2_000, 2_000);
-            protect(request, toProtect);
-            request.setStatus(Status.COMPLETE);
-        } catch (final Exception e) {
-            log.error("Failed to protect " + request, e);
-            request.setStatus(Status.ERROR);
-            request.setStatusReason(e.getMessage());
-        }
-
-        protectionRequestRepository.save(request).block();
+    private void copyFromUrl(final ProtectionRequest request, final File toProtect)
+            throws IOException, MalformedURLException {
+        FileUtils.copyURLToFile(new URL(request.getUrl()), toProtect, 2_000, 2_000);
     }
 
     private File protect(final ProtectionRequest request, final File toProtect) throws ServiceUnavailableException,
@@ -131,7 +145,7 @@ public class MipHandler {
         watch.stop();
         log.info("Completed protection of : {} in {} ms", protectedFile.getAbsolutePath(), watch.getTime());
 
-        return protectedFile;
+        return toProtect;
 
     }
 

@@ -4,8 +4,14 @@
  */
 package com.microsoft.protection.controller;
 
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+
+import java.net.URISyntaxException;
+
 import javax.validation.Valid;
 
+import org.springframework.hateoas.Link;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,8 +23,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.google.common.base.Joiner;
+import com.microsoft.azure.storage.StorageException;
 import com.microsoft.protection.controller.model.ProtectionRequestGet;
 import com.microsoft.protection.controller.model.ProtectionRequestPost;
+import com.microsoft.protection.data.AzureStorageRepository;
 import com.microsoft.protection.data.ProtectionRequestRepository;
 import com.microsoft.protection.data.model.ProtectionRequest;
 
@@ -35,6 +43,8 @@ public class ProtectionRequestController {
     private final ProtectionRequestRepository protectionRequestRepository;
 
     private final MipHandler mipHandler;
+
+    private final AzureStorageRepository azureStorageRepository;
 
     @GetMapping
     public Flux<ProtectionRequest> getAllRequests() {
@@ -77,9 +87,24 @@ public class ProtectionRequestController {
                 .defaultIfEmpty(ResponseEntity.status(404).body(null));
     }
 
-    private static ProtectionRequestGet toProtectionRequestGet(final ProtectionRequest entity) {
-        return new ProtectionRequestGet(entity.getUrl(), entity.getUser(), entity.getCorrelationId(),
-                JOINER.join(entity.getRights()), entity.getId(), entity.getStatus().toString(),
-                entity.getStatusReason(), entity.getFileName());
+    private ProtectionRequestGet toProtectionRequestGet(final ProtectionRequest entity) {
+
+        final ProtectionRequestGet response = new ProtectionRequestGet(entity.getUrl(), entity.getUser(),
+                entity.getCorrelationId(), JOINER.join(entity.getRights()), entity.getId(),
+                entity.getStatus().toString(), entity.getStatusReason(), entity.getFileName());
+
+        if (ProtectionRequest.Status.COMPLETE.equals(entity.getStatus())) {
+            try {
+                response.add(new Link(azureStorageRepository.getUri(entity.getId(), entity.getFileName()).toString(),
+                        "download"));
+            } catch (StorageException | URISyntaxException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+
+        response.add(linkTo(methodOn(ProtectionRequestController.class).getRequest(entity.getId())).withSelfRel());
+
+        return response;
     }
 }

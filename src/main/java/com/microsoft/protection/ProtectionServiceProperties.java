@@ -24,6 +24,9 @@ public class ProtectionServiceProperties {
     @NotBlank
     private String fileApiCli;
 
+    @NotBlank
+    private String storageContainerName = "artifactrepository";
+
     private AAD aad = new AAD();
 
     @Getter
