@@ -8,10 +8,14 @@ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
 import java.net.URISyntaxException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.Link;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,8 +36,6 @@ import com.microsoft.protection.data.ProtectionRequestRepository;
 import com.microsoft.protection.data.model.ProtectionRequest;
 
 import lombok.RequiredArgsConstructor;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 @RestController
 @RequiredArgsConstructor
@@ -46,14 +49,17 @@ public class ProtectionRequestController {
 
     private final AzureStorageRepository azureStorageRepository;
 
+    // TODO limit and filter by parameter
     @GetMapping
-    public Flux<ProtectionRequest> getAllRequests() {
-        return protectionRequestRepository.findAll();
+    @ResponseStatus(HttpStatus.OK)
+    public List<ProtectionRequestGet> getAllRequests() {
+        return protectionRequestRepository.findAll(PageRequest.of(0, 500)).stream()
+                .map(entity -> toProtectionRequestGet(entity)).collect(Collectors.toList());
     }
 
     @PostMapping("/upload")
-    public Mono<ResponseEntity<ProtectionRequestGet>> createRequestWithUpload(
-            @RequestParam("file") final MultipartFile file,
+    @ResponseStatus(HttpStatus.CREATED)
+    public ProtectionRequestGet createRequestWithUpload(@RequestParam("file") final MultipartFile file,
             @RequestParam(name = "rights", required = false) final String rights,
             @RequestParam(name = "correlationId", required = false) final String correlationId,
             @RequestParam(name = "user") final String user) {
@@ -63,13 +69,15 @@ public class ProtectionRequestController {
         toCreate.setUser(user);
         toCreate.setFileName(file.getOriginalFilename());
 
-        return protectionRequestRepository.save(toCreate).doOnNext(stored -> mipHandler.protect(stored, file))
-                .map(entity -> ResponseEntity.ok(toProtectionRequestGet(entity)));
+        final ProtectionRequest stored = protectionRequestRepository.save(toCreate);
+        mipHandler.protect(stored, file);
+
+        return toProtectionRequestGet(stored);
     }
 
     @PostMapping
-    public Mono<ResponseEntity<ProtectionRequestGet>> createRequest(
-            @Valid @RequestBody final ProtectionRequestPost request) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public ProtectionRequestGet createRequest(@Valid @RequestBody final ProtectionRequestPost request) {
         final ProtectionRequest toCreate = new ProtectionRequest();
         toCreate.setCorrelationId(request.getCorrelationId());
         toCreate.setRightsAsString(request.getRights());
@@ -77,14 +85,16 @@ public class ProtectionRequestController {
         toCreate.setUser(request.getUser());
         toCreate.setFileName(request.getFileName());
 
-        return protectionRequestRepository.save(toCreate).doOnNext(mipHandler::protect)
-                .map(entity -> ResponseEntity.ok(toProtectionRequestGet(entity)));
+        final ProtectionRequest stored = protectionRequestRepository.save(toCreate);
+        mipHandler.protect(stored);
+
+        return toProtectionRequestGet(stored);
     }
 
     @GetMapping("/{id}")
-    public Mono<ResponseEntity<ProtectionRequestGet>> getRequest(@PathVariable final String id) {
+    public ResponseEntity<ProtectionRequestGet> getRequest(@PathVariable final String id) {
         return protectionRequestRepository.findById(id).map(entity -> ResponseEntity.ok(toProtectionRequestGet(entity)))
-                .defaultIfEmpty(ResponseEntity.status(404).body(null));
+                .orElse(ResponseEntity.status(404).body(null));
     }
 
     private ProtectionRequestGet toProtectionRequestGet(final ProtectionRequest entity) {

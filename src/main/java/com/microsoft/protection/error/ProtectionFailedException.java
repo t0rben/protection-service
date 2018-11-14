@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-package com.microsoft.protection.controller;
+package com.microsoft.protection.error;
 
 public class ProtectionFailedException extends RuntimeException {
 

@@ -9,11 +9,13 @@ import java.io.Serializable;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
+@EqualsAndHashCode
 public abstract class BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;

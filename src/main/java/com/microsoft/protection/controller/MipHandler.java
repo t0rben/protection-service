@@ -20,16 +20,11 @@ import java.util.concurrent.TimeoutException;
 import javax.naming.ServiceUnavailableException;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.zeroturnaround.exec.InvalidExitValueException;
-import org.zeroturnaround.exec.ProcessExecutor;
-import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
 
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
@@ -41,6 +36,8 @@ import com.microsoft.protection.data.AzureStorageRepository;
 import com.microsoft.protection.data.ProtectionRequestRepository;
 import com.microsoft.protection.data.model.ProtectionRequest;
 import com.microsoft.protection.data.model.ProtectionRequest.Status;
+import com.microsoft.protection.error.ProtectionFailedException;
+import com.microsoft.protection.mip.MipSdkCaller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,8 +52,9 @@ public class MipHandler {
     private final ProtectionRequestRepository protectionRequestRepository;
     private final ThreadPoolExecutor threadPoolExecutor;
     private final ProtectionServiceProperties protectionServiceProperties;
-
     private final AzureStorageRepository azureStorageRepository;
+
+    private final MipSdkCaller mipSdkCaller;
 
     // TODO create scheduler to pick up unfinished requests, use lock service to
     // synchronize
@@ -83,7 +81,7 @@ public class MipHandler {
         }
     }
 
-    void copyAndprotect(final ProtectionRequest request, final MultipartFile file) {
+    private void copyAndprotect(final ProtectionRequest request, final MultipartFile file) {
 
         final File myTempDir = Files.createTempDir();
         final File toProtect = new File(myTempDir, request.getFileName());
@@ -96,7 +94,8 @@ public class MipHandler {
                 copyMultipart(file, toProtect);
             }
 
-            final File protectedFile = protect(request, toProtect);
+            getAccessToken();
+            final File protectedFile = mipSdkCaller.protect(request, toProtect, accessToken);
             azureStorageRepository.store(protectedFile, file.getContentType(), request.getId());
             request.setStatus(Status.COMPLETE);
         } catch (final Exception e) {
@@ -105,7 +104,7 @@ public class MipHandler {
             request.setStatusReason(e.getMessage());
         }
 
-        protectionRequestRepository.save(request).block();
+        protectionRequestRepository.save(request);
     }
 
     private void copyFromUrl(final ProtectionRequest request, final File toProtect)
@@ -113,82 +112,9 @@ public class MipHandler {
         FileUtils.copyURLToFile(new URL(request.getUrl()), toProtect, 2_000, 2_000);
     }
 
-    private File protect(final ProtectionRequest request, final File toProtect) throws ServiceUnavailableException,
-            InterruptedException, ExecutionException, TimeoutException, InvalidExitValueException, IOException {
-        final StopWatch watch = new StopWatch();
-        watch.start();
-        getAccessToken();
-
-        final String sdkCall = buildMipSdkCall(request, toProtect);
-
-        final String output = new ProcessExecutor().commandSplit(sdkCall).destroyOnExit()
-                .redirectError(Slf4jStream.ofCaller().asError()).readOutput(true).timeout(60, TimeUnit.MINUTES)
-                .execute().outputUTF8();
-
-        if (!StringUtils.hasText(output)) {
-            throw new ProtectionFailedException("Failed to protect file: no result from MIP SDK.");
-        }
-
-        final String[] items = output.split(" ");
-        final File protectedFile = new File(items[items.length - 1].trim());
-
-        if (!protectedFile.getAbsoluteFile().exists()) {
-            throw new ProtectionFailedException(
-                    "MIP SDK has no created a protected file (returned with with message: " + output + ")");
-        }
-
-        FileUtils.forceDelete(toProtect);
-        if (!protectedFile.renameTo(toProtect.getAbsoluteFile())) {
-            throw new ProtectionFailedException("Failed to rename " + protectedFile + " to " + toProtect);
-        }
-
-        watch.stop();
-        log.info("Completed protection of : {} in {} ms", protectedFile.getAbsolutePath(), watch.getTime());
-
-        return toProtect;
-
-    }
-
-    private String buildMipSdkCall(final ProtectionRequest request, final File toProtect) {
-        final StringBuilder sdkCall = new StringBuilder();
-        sdkCall.append(protectionServiceProperties.getFileApiCli());
-        sdkCall.append(" ");
-
-        sdkCall.append("--username ");
-        sdkCall.append(protectionServiceProperties.getUser());
-        sdkCall.append(" ");
-
-        sdkCall.append("--rights ");
-        sdkCall.append(request.getRightsAsString());
-        sdkCall.append(" ");
-
-        sdkCall.append("--protect ");
-        sdkCall.append(request.getUser());
-        sdkCall.append(" ");
-
-        sdkCall.append("--clientid ");
-        sdkCall.append(protectionServiceProperties.getAad().getClientId());
-        sdkCall.append(" ");
-
-        sdkCall.append("--protectiontoken ");
-        sdkCall.append(accessToken);
-        sdkCall.append(" ");
-
-        // FIXME properties
-        sdkCall.append("--protectionbaseurl ");
-        sdkCall.append(protectionServiceProperties.getProtectionBaseurl());
-        sdkCall.append(" ");
-
-        sdkCall.append("--file ");
-        sdkCall.append(toProtect.getAbsolutePath());
-        sdkCall.append(" ");
-
-        return sdkCall.toString();
-    }
-
     private void getAccessToken() throws MalformedURLException, InterruptedException, ExecutionException,
             TimeoutException, ServiceUnavailableException {
-        if (accessToken != null && System.currentTimeMillis() > (accessTokenExpiresAfter - 10_000)) {
+        if (accessToken != null && System.currentTimeMillis() < (accessTokenExpiresAfter - 10_000)) {
             return;
         }
 

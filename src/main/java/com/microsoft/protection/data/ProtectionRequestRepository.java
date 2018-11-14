@@ -4,12 +4,12 @@
  */
 package com.microsoft.protection.data;
 
-import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 
 import com.microsoft.protection.data.model.ProtectionRequest;
 
 @Repository
-public interface ProtectionRequestRepository extends ReactiveMongoRepository<ProtectionRequest, String> {
+public interface ProtectionRequestRepository extends PagingAndSortingRepository<ProtectionRequest, String> {
 
 }
