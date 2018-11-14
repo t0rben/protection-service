@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 public class AzureStorageRepository {
+    // TODO handle valid until by means of auto delete entry
 
     private final CloudBlobClient blobClient;
     private final ProtectionServiceProperties properties;

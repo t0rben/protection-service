@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,10 +37,12 @@ import com.microsoft.protection.data.ProtectionRequestRepository;
 import com.microsoft.protection.data.model.ProtectionRequest;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/v1/protection")
+@Slf4j
 public class ProtectionRequestController {
     private static final Joiner JOINER = Joiner.on(",").skipNulls();
 
@@ -95,6 +98,22 @@ public class ProtectionRequestController {
     public ResponseEntity<ProtectionRequestGet> getRequest(@PathVariable final String id) {
         return protectionRequestRepository.findById(id).map(entity -> ResponseEntity.ok(toProtectionRequestGet(entity)))
                 .orElse(ResponseEntity.status(404).body(null));
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public void deleteRequest(@PathVariable final String id) {
+
+        final ProtectionRequest entity = protectionRequestRepository.findById(id).orElseThrow();
+        try {
+            azureStorageRepository.delete(id, entity.getFileName());
+        } catch (StorageException | URISyntaxException e) {
+            log.error("Could not delete file {}", entity, e);
+        }
+
+        // TODO miphandler -> invalidate
+        protectionRequestRepository.delete(entity);
+
     }
 
     private ProtectionRequestGet toProtectionRequestGet(final ProtectionRequest entity) {

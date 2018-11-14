@@ -9,6 +9,7 @@ import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.is;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -153,6 +154,23 @@ public class ProtectionRequestControllerTest {
                 .andExpect(jsonPath("correlationId", is(test.getCorrelationId())))
                 .andExpect(jsonPath("url", is(test.getUrl()))).andExpect(jsonPath("user", is(test.getUser())))
                 .andExpect(jsonPath("status", is(Status.PROCESSING.toString())));
+
+        verifyZeroInteractions(mipHandler);
+    }
+
+    @Test
+    public void deleteProtectionRequest() throws Exception {
+        ProtectionRequest test = new ProtectionRequest();
+        test.setCorrelationId(UUID.randomUUID().toString());
+        test.setRights(Set.of(Right.READ));
+        test.setUrl("https://download.here");
+        test.setUser("user@contoso.com");
+
+        test = protectionRequestRepository.save(test);
+
+        mvc.perform(delete("/v1/protection/{id}", test.getId())).andExpect(status().isOk());
+
+        assertThat(protectionRequestRepository.count()).isEqualTo(0L);
 
         verifyZeroInteractions(mipHandler);
     }

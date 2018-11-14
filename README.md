@@ -6,12 +6,12 @@ https://aka.ms/MIPSDKBinaries
 
 TODO
 
-## HowTo
 
 ## Action items
 
 - Build rest API
 - Integrate MIP SDK
+  - Extend integration with validUntil  
 - Integrate AAD
 - Build docker images for:
   - service

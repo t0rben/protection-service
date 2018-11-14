@@ -100,7 +100,6 @@ public class FileSampleMipSdkCaller implements MipSdkCaller {
         sdkCall.append(accessToken);
         sdkCall.append(" ");
 
-        // FIXME properties
         sdkCall.append("--protectionbaseurl ");
         sdkCall.append(protectionServiceProperties.getProtectionBaseurl());
         sdkCall.append(" ");
