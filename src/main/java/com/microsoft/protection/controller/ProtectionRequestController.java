@@ -71,6 +71,8 @@ public class ProtectionRequestController {
         toCreate.setRightsAsString(rights);
         toCreate.setUser(user);
         toCreate.setFileName(file.getOriginalFilename());
+        toCreate.setContentType(file.getContentType());
+        toCreate.setSize(file.getSize());
 
         final ProtectionRequest stored = protectionRequestRepository.save(toCreate);
         mipHandler.protect(stored, file);
@@ -87,6 +89,8 @@ public class ProtectionRequestController {
         toCreate.setUrl(request.getUrl());
         toCreate.setUser(request.getUser());
         toCreate.setFileName(request.getFileName());
+        toCreate.setContentType(request.getContentType());
+        toCreate.setSize(request.getSize());
 
         final ProtectionRequest stored = protectionRequestRepository.save(toCreate);
         mipHandler.protect(stored);
@@ -120,7 +124,8 @@ public class ProtectionRequestController {
 
         final ProtectionRequestGet response = new ProtectionRequestGet(entity.getUrl(), entity.getUser(),
                 entity.getCorrelationId(), JOINER.join(entity.getRights()), entity.getId(),
-                entity.getStatus().toString(), entity.getStatusReason(), entity.getFileName());
+                entity.getStatus().toString(), entity.getStatusReason(), entity.getFileName(), entity.getContentType(),
+                entity.getSize());
 
         if (ProtectionRequest.Status.COMPLETE.equals(entity.getStatus())) {
             try {

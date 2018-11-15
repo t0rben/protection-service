@@ -56,6 +56,11 @@ public class ProtectionRequest extends BaseEntity {
 
     private Set<Right> rights = Set.of(Right.READ, Right.VIEW);
 
+    @NotBlank
+    private String contentType;
+
+    private Long size;
+
     // FIXME: implement including introducing an extra status
     // private Date validUntil
 

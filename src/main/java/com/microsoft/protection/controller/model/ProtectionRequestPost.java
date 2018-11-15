@@ -28,7 +28,7 @@ public class ProtectionRequestPost extends ResourceSupport {
     @JsonProperty
     private String url;
 
-    @JsonProperty
+    @JsonProperty(required = true)
     private String user;
 
     @JsonProperty
@@ -39,6 +39,12 @@ public class ProtectionRequestPost extends ResourceSupport {
 
     @JsonProperty
     private String fileName;
+
+    @JsonProperty
+    private String contentType;
+
+    @JsonProperty
+    private Long size;
 
     // FIXME implement
     // @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy

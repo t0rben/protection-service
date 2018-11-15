@@ -31,8 +31,8 @@ public class ProtectionRequestGet extends ProtectionRequestPost {
 
     public ProtectionRequestGet(final String url, final String user, final String correlationId,
             final String permissions, final String entityId, final String status, final String statusReason,
-            final String fileName) {
-        super(url, user, correlationId, permissions, fileName);
+            final String fileName, final String contentType, final Long size) {
+        super(url, user, correlationId, permissions, fileName, contentType, size);
         this.entityId = entityId;
         this.status = status;
         this.statusReason = statusReason;
