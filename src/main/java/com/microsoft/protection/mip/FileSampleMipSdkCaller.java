@@ -11,7 +11,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.time.StopWatch;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.zeroturnaround.exec.InvalidExitValueException;
 import org.zeroturnaround.exec.ProcessExecutor;
@@ -24,7 +23,6 @@ import com.microsoft.protection.error.ProtectionFailedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@Component
 @RequiredArgsConstructor
 @Slf4j
 public class FileSampleMipSdkCaller implements MipSdkCaller {

@@ -9,8 +9,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.springframework.stereotype.Component;
-
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.OperationContext;
 import com.microsoft.azure.storage.StorageException;
@@ -24,7 +22,6 @@ import com.microsoft.protection.ProtectionServiceProperties;
 
 import lombok.extern.slf4j.Slf4j;
 
-@Component
 @Slf4j
 public class AzureStorageRepository {
     // TODO handle valid until by means of auto delete entry
@@ -32,7 +29,8 @@ public class AzureStorageRepository {
     private final CloudBlobClient blobClient;
     private final ProtectionServiceProperties properties;
 
-    AzureStorageRepository(final CloudStorageAccount storageAccount, final ProtectionServiceProperties properties) {
+    public AzureStorageRepository(final CloudStorageAccount storageAccount,
+            final ProtectionServiceProperties properties) {
         this.blobClient = storageAccount.createCloudBlobClient();
         this.properties = properties;
     }

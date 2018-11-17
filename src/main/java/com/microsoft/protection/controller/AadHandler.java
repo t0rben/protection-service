@@ -13,7 +13,6 @@ import java.util.concurrent.TimeoutException;
 
 import javax.naming.ServiceUnavailableException;
 
-import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.microsoft.aad.adal4j.AuthenticationContext;
@@ -23,7 +22,6 @@ import com.microsoft.protection.ProtectionServiceProperties;
 
 import lombok.RequiredArgsConstructor;
 
-@Component
 @RequiredArgsConstructor
 public class AadHandler {
 

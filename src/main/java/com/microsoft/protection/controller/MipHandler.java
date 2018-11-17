@@ -17,7 +17,6 @@ import java.net.URLConnection;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,7 +32,6 @@ import com.microsoft.protection.mip.MipSdkCaller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@Component
 @RequiredArgsConstructor
 @Slf4j
 public class MipHandler {
@@ -41,7 +39,6 @@ public class MipHandler {
     private final ProtectionRequestRepository protectionRequestRepository;
     private final AzureStorageRepository azureStorageRepository;
     private final AadHandler aadHandler;
-
     private final MipSdkCaller mipSdkCaller;
 
     @Async
