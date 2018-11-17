@@ -65,7 +65,7 @@ public class ProtectionRequestControllerTest extends AbstractTest {
             "user@contoso.com", UUID.randomUUID().toString(), "READ", "filename.pdf", "application/pdf", 123L);
 
     @Test
-    public void createProtectionRequest() throws Exception {
+    public void testCreateProtectionRequest() throws Exception {
 
         mvc.perform(post("/v1/protection").contentType(MediaType.APPLICATION_JSON_UTF8)
                 .accept(MediaType.APPLICATION_JSON_UTF8).content(objectMapper.writeValueAsString(testPost)))
@@ -92,7 +92,7 @@ public class ProtectionRequestControllerTest extends AbstractTest {
     }
 
     @Test
-    public void createProtectionRequestWithUpload() throws Exception {
+    public void testCreateProtectionRequestWithUpload() throws Exception {
         final MockMultipartFile mockMultipartFile = new MockMultipartFile("file", "filename.pdf", "application/pdf",
                 "test data".getBytes());
 
@@ -122,7 +122,7 @@ public class ProtectionRequestControllerTest extends AbstractTest {
     }
 
     @Test
-    public void getProtectionRequests() throws Exception {
+    public void testGetProtectionRequests() throws Exception {
         ProtectionRequest testStored = storeTestRequest();
         testStored.setStatus(Status.COMPLETE);
         testStored = protectionRequestRepository.save(testStored);
@@ -157,7 +157,7 @@ public class ProtectionRequestControllerTest extends AbstractTest {
     }
 
     @Test
-    public void deleteProtectionRequest() throws Exception {
+    public void testDeleteProtectionRequest() throws Exception {
         final ProtectionRequest testStored = storeTestRequest();
         mvc.perform(delete("/v1/protection/{id}", testStored.getId())).andExpect(status().isOk());
 

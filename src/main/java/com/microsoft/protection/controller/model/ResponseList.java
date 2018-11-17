@@ -5,6 +5,7 @@
 package com.microsoft.protection.controller.model;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -29,7 +30,7 @@ public class ResponseList<T> extends ResourceSupport implements List<T> {
      *            to delegate
      */
     public ResponseList(final List<T> content) {
-        this.content = content;
+        this.content = Collections.unmodifiableList(content);
     }
 
     @Override

@@ -71,7 +71,7 @@ public class MipHandlerTest extends AbstractTest {
     }
 
     @Test
-    public void protectWithMultipartFile() throws Exception {
+    public void testProtectWithMultipartFile() throws Exception {
 
         final String testAccessToken = UUID.randomUUID().toString();
         when(aadHandler.getAccessToken()).thenReturn(Optional.of(testAccessToken));
@@ -91,7 +91,7 @@ public class MipHandlerTest extends AbstractTest {
     }
 
     @Test
-    public void protectProtectionRequest() throws Exception {
+    public void testProtectProtectionRequest() throws Exception {
 
         final String testAccessToken = UUID.randomUUID().toString();
         when(aadHandler.getAccessToken()).thenReturn(Optional.of(testAccessToken));
