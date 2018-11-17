@@ -12,8 +12,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -42,8 +44,6 @@ public class MipHandler {
 
     private final MipSdkCaller mipSdkCaller;
 
-    // TODO create scheduler to pick up unfinished requests, use lock service to
-    // synchronize
     @Async
     void protect(final ProtectionRequest request, final MultipartFile file) {
         Assert.notNull(file, "File must not be null!");
@@ -58,11 +58,11 @@ public class MipHandler {
         copyAndprotect(request, null);
     }
 
-    private void copyMultipart(final MultipartFile file, final File toProtect)
+    private long copyMultipart(final MultipartFile file, final File toProtect)
             throws IOException, FileNotFoundException {
         try (final InputStream upload = file.getInputStream()) {
             try (OutputStream temp = new FileOutputStream(toProtect)) {
-                ByteStreams.copy(upload, temp);
+                return ByteStreams.copy(upload, temp);
             }
         }
     }
@@ -73,14 +73,15 @@ public class MipHandler {
         final File toProtect = new File(myTempDir, request.getFileName());
 
         try {
-
-            // FIXME set file size if not provided by request, check if it is
-            // set
+            final long size;
             if (file == null) {
-                copyFromUrl(request, toProtect);
+                size = copyFromUrl(request, toProtect);
+
             } else {
-                copyMultipart(file, toProtect);
+                size = copyMultipart(file, toProtect);
             }
+
+            verifySize(request, size);
 
             final String accessToken = aadHandler.getAccessToken()
                     .orElseThrow(() -> new ProtectionFailedException("Could not get access token from AAD"));
@@ -96,9 +97,24 @@ public class MipHandler {
         protectionRequestRepository.save(request);
     }
 
-    private void copyFromUrl(final ProtectionRequest request, final File toProtect)
+    private void verifySize(final ProtectionRequest request, final long size) {
+        if (request.getSize() == null) {
+            request.setSize(size);
+        } else if (request.getSize() != size) {
+            throw new ProtectionFailedException(
+                    "Provide file size " + request.getSize() + " does not match with actual file size " + size);
+        }
+    }
+
+    private long copyFromUrl(final ProtectionRequest request, final File toProtect)
             throws IOException, MalformedURLException {
-        FileUtils.copyURLToFile(new URL(request.getUrl()), toProtect, 2_000, 2_000);
+
+        final URLConnection connection = new URL(request.getUrl()).openConnection();
+        connection.setConnectTimeout(2_000);
+        connection.setReadTimeout(2_000);
+        try (InputStream in = connection.getInputStream(); OutputStream out = FileUtils.openOutputStream(toProtect)) {
+            return IOUtils.copyLarge(in, out);
+        }
     }
 
 }

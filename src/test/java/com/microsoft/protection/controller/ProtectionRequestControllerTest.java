@@ -7,23 +7,30 @@ package com.microsoft.protection.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.is;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.net.URI;
 import java.util.UUID;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.TestPropertySource;
@@ -116,34 +123,37 @@ public class ProtectionRequestControllerTest extends AbstractTest {
 
     @Test
     public void getProtectionRequests() throws Exception {
-        final ProtectionRequest testStored = storeTestRequest();
+        ProtectionRequest testStored = storeTestRequest();
+        testStored.setStatus(Status.COMPLETE);
+        testStored = protectionRequestRepository.save(testStored);
+        final URI download = new URI("https://download.from/here/" + testStored.getFileName());
 
-        mvc.perform(get("/v1/protection").accept(MediaType.APPLICATION_JSON_UTF8)).andExpect(status().isOk())
+        when(azureStorageRepository.getUri(Mockito.eq(testStored.getId()), eq(testStored.getFileName())))
+                .thenReturn(download);
+
+        mvc.perform(get("/v1/protection").accept(MediaTypes.HAL_JSON_UTF8_VALUE)).andExpect(status().isOk())
+                .andExpect(content().contentType(MediaTypes.HAL_JSON_UTF8_VALUE))
                 .andExpect(jsonPath("[0].id", is(testStored.getId())))
                 .andExpect(jsonPath("[0].correlationId", is(testStored.getCorrelationId())))
                 .andExpect(jsonPath("[0].url", is(testStored.getUrl())))
                 .andExpect(jsonPath("[0].user", is(testStored.getUser())))
-                .andExpect(jsonPath("[0].status", is(Status.PROCESSING.toString())))
+                .andExpect(jsonPath("[0].status", is(Status.COMPLETE.toString())))
                 .andExpect(jsonPath("[0].contentType", is(testStored.getContentType())))
-                .andExpect(jsonPath("[0].size", is(testStored.getSize().intValue())));
-
-        verifyZeroInteractions(mipHandler);
-    }
-
-    @Test
-    public void getProtectionRequest() throws Exception {
-        final ProtectionRequest testStored = storeTestRequest();
+                .andExpect(jsonPath("[0].size", is(testStored.getSize().intValue())))
+                .andExpect(jsonPath("[0]._links.download.href", is(download.toString())));
 
         mvc.perform(get("/v1/protection/{id}", testStored.getId()).accept(MediaType.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk()).andExpect(jsonPath("id", is(testStored.getId())))
                 .andExpect(jsonPath("correlationId", is(testStored.getCorrelationId())))
                 .andExpect(jsonPath("url", is(testStored.getUrl())))
                 .andExpect(jsonPath("user", is(testStored.getUser())))
-                .andExpect(jsonPath("status", is(Status.PROCESSING.toString())))
+                .andExpect(jsonPath("status", is(Status.COMPLETE.toString())))
                 .andExpect(jsonPath("contentType", is(testStored.getContentType())))
-                .andExpect(jsonPath("size", is(testStored.getSize().intValue())));
+                .andExpect(jsonPath("size", is(testStored.getSize().intValue())))
+                .andExpect(jsonPath("_links.download.href", is(download.toString())));
 
         verifyZeroInteractions(mipHandler);
+        verify(azureStorageRepository, times(2)).getUri(testStored.getId(), testStored.getFileName());
     }
 
     @Test

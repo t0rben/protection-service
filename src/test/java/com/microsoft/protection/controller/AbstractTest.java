@@ -32,7 +32,7 @@ public abstract class AbstractTest {
         testStored.setUser("user@contoso.com");
         testStored.setFileName("filename.pdf");
         testStored.setContentType("application/pdf");
-        testStored.setSize(123L);
+        testStored.setSize(9L);
 
         return protectionRequestRepository.save(testStored);
     }

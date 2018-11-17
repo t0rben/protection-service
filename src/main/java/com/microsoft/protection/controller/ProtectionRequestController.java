@@ -15,7 +15,9 @@ import javax.validation.Valid;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.Link;
+import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +34,7 @@ import com.google.common.base.Joiner;
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.protection.controller.model.ProtectionRequestGet;
 import com.microsoft.protection.controller.model.ProtectionRequestPost;
+import com.microsoft.protection.controller.model.ResponseList;
 import com.microsoft.protection.data.AzureStorageRepository;
 import com.microsoft.protection.data.ProtectionRequestRepository;
 import com.microsoft.protection.data.model.ProtectionRequest;
@@ -56,8 +59,8 @@ public class ProtectionRequestController {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public List<ProtectionRequestGet> getAllRequests() {
-        return protectionRequestRepository.findAll(PageRequest.of(0, 500)).stream()
-                .map(entity -> toProtectionRequestGet(entity)).collect(Collectors.toList());
+        return new ResponseList<>(protectionRequestRepository.findAll(PageRequest.of(0, 500)).stream()
+                .map(entity -> toProtectionRequestGet(entity)).collect(Collectors.toList()));
     }
 
     @PostMapping("/upload")
@@ -98,7 +101,7 @@ public class ProtectionRequestController {
         return toProtectionRequestGet(stored);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(value = "/{id}", produces = { MediaTypes.HAL_JSON_VALUE, MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<ProtectionRequestGet> getRequest(@PathVariable final String id) {
         return protectionRequestRepository.findById(id).map(entity -> ResponseEntity.ok(toProtectionRequestGet(entity)))
                 .orElse(ResponseEntity.status(404).body(null));
@@ -132,8 +135,7 @@ public class ProtectionRequestController {
                 response.add(new Link(azureStorageRepository.getUri(entity.getId(), entity.getFileName()).toString(),
                         "download"));
             } catch (StorageException | URISyntaxException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                log.error("Could not generate download link", e);
             }
         }
 
