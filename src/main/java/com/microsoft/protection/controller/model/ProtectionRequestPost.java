@@ -4,8 +4,11 @@
  */
 package com.microsoft.protection.controller.model;
 
+import java.util.Date;
+
 import org.springframework.hateoas.ResourceSupport;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -47,7 +50,6 @@ public class ProtectionRequestPost extends ResourceSupport {
     private Long size;
 
     // TODO implement
-    // @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy
-    // hh:mm:ss")
-    // private String validUntil;
+    @JsonFormat(pattern = "dd-MM-yyyy hh:mm:ss", shape = JsonFormat.Shape.STRING)
+    private Date validUntil;
 }

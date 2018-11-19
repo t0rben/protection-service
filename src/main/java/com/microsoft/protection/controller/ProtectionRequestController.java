@@ -7,7 +7,6 @@ package com.microsoft.protection.controller;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
-import java.net.URISyntaxException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,7 +29,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.microsoft.azure.storage.StorageException;
 import com.microsoft.protection.controller.model.ProtectionRequestGet;
 import com.microsoft.protection.controller.model.ProtectionRequestPost;
 import com.microsoft.protection.controller.model.ResponseList;
@@ -112,11 +110,8 @@ public class ProtectionRequestController {
     public void deleteRequest(@PathVariable final String id) {
 
         final ProtectionRequest entity = protectionRequestRepository.findById(id).orElseThrow();
-        try {
-            azureStorageRepository.delete(id, entity.getFileName());
-        } catch (StorageException | URISyntaxException e) {
-            log.error("Could not delete file {}", entity, e);
-        }
+
+        azureStorageRepository.delete(id, entity.getFileName());
 
         // TODO miphandler -> invalidate
         protectionRequestRepository.delete(entity);
@@ -127,15 +122,12 @@ public class ProtectionRequestController {
 
         final ProtectionRequestGet response = new ProtectionRequestGet(entity.getUrl(), entity.getUser(),
                 entity.getCorrelationId(), entity.getRightsAsString(), entity.getId(), entity.getStatus().toString(),
-                entity.getStatusReason(), entity.getFileName(), entity.getContentType(), entity.getSize());
+                entity.getStatusReason(), entity.getFileName(), entity.getContentType(), entity.getSize(),
+                entity.getValidUntil());
 
         if (Status.COMPLETE == entity.getStatus()) {
-            try {
-                response.add(new Link(azureStorageRepository.getUri(entity.getId(), entity.getFileName()).toString(),
-                        "download"));
-            } catch (StorageException | URISyntaxException e) {
-                log.error("Could not generate download link", e);
-            }
+            response.add(new Link(azureStorageRepository.getUri(entity.getId(), entity.getFileName()).toString(),
+                    "download"));
         }
 
         response.add(linkTo(methodOn(ProtectionRequestController.class).getRequest(entity.getId())).withSelfRel());

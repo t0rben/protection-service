@@ -55,7 +55,7 @@ public class ProtectionRequestControllerTest extends AbstractTest {
     private ObjectMapper objectMapper;
 
     private final ProtectionRequestPost testPost = new ProtectionRequestPost("https://download.here/filename.pdf",
-            "user@contoso.com", UUID.randomUUID().toString(), "READ", "filename.pdf", "application/pdf", 123L);
+            "user@contoso.com", UUID.randomUUID().toString(), "READ", "filename.pdf", "application/pdf", 123L, null);
 
     @Test
     public void testCreateProtectionRequest() throws Exception {

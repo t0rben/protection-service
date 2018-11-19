@@ -4,6 +4,7 @@
  */
 package com.microsoft.protection.data.model;
 
+import java.util.Date;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -60,7 +61,7 @@ public class ProtectionRequest extends BaseEntity {
     private Long size;
 
     // TODO: implement including introducing an extra status
-    // private Date validUntil
+    private Date validUntil;
 
     public void setRightsAsString(final String rights) {
 

@@ -19,6 +19,7 @@ import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import com.microsoft.azure.storage.blob.CloudBlobDirectory;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
 import com.microsoft.protection.ProtectionServiceProperties;
+import com.microsoft.protection.error.FileStorageFailedException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,12 +36,16 @@ public class AzureStorageRepository {
         this.properties = properties;
     }
 
-    private CloudBlobContainer getContainer() throws URISyntaxException, StorageException {
-        final CloudBlobContainer container = blobClient.getContainerReference(properties.getStorageContainerName());
-        container.createIfNotExists(BlobContainerPublicAccessType.CONTAINER, new BlobRequestOptions(),
-                new OperationContext());
+    private CloudBlobContainer getContainer() {
+        try {
+            final CloudBlobContainer container = blobClient.getContainerReference(properties.getStorageContainerName());
+            container.createIfNotExists(BlobContainerPublicAccessType.CONTAINER, new BlobRequestOptions(),
+                    new OperationContext());
+            return container;
+        } catch (final StorageException | URISyntaxException e) {
+            throw new FileStorageFailedException("Failed to retrieve container", e);
+        }
 
-        return container;
     }
 
     public void store(final File file, final String contentType, final String id)
@@ -65,23 +70,32 @@ public class AzureStorageRepository {
                 blob.getContainer().getName(), blob.getProperties().getEtag());
     }
 
-    private CloudBlockBlob getBlob(final String id, final String fileName) throws URISyntaxException, StorageException {
+    private CloudBlockBlob getBlob(final String id, final String fileName) {
         final CloudBlobContainer container = getContainer();
-        final CloudBlobDirectory directory = container.getDirectoryReference(id);
-        return directory.getBlockBlobReference(fileName);
+        CloudBlobDirectory directory;
+        try {
+            directory = container.getDirectoryReference(id);
+            return directory.getBlockBlobReference(fileName);
+        } catch (final StorageException | URISyntaxException e) {
+            throw new FileStorageFailedException("Failed to terieve blob!", e);
+        }
     }
 
-    public void delete(final String id, final String fileName) throws StorageException, URISyntaxException {
+    public void delete(final String id, final String fileName) {
         final CloudBlockBlob blob = getBlob(id, fileName);
 
-        log.info("Deleting Azure Storage blob from container {} and id {}", blob.getContainer().getName(), id);
-        blob.delete();
+        log.info("Deleting Azure Storage blob from directory {} and id {}", fileName, id);
+        try {
+            blob.delete();
+        } catch (final StorageException e) {
+            throw new FileStorageFailedException("Failed to delete blob", e);
+        }
     }
 
-    public URI getUri(final String id, final String fileName) throws StorageException, URISyntaxException {
+    public URI getUri(final String id, final String fileName) {
         final CloudBlockBlob blob = getBlob(id, fileName);
 
-        log.info("Deleting Azure Storage blob from container {} and id {}", blob.getContainer().getName(), id);
+        log.info("Deleting Azure Storage blob from directory {} and id {}", fileName, id);
         return blob.getUri();
     }
 

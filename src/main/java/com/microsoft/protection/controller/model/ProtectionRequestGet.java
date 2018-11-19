@@ -4,6 +4,8 @@
  */
 package com.microsoft.protection.controller.model;
 
+import java.util.Date;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -31,8 +33,8 @@ public class ProtectionRequestGet extends ProtectionRequestPost {
 
     public ProtectionRequestGet(final String url, final String user, final String correlationId,
             final String permissions, final String entityId, final String status, final String statusReason,
-            final String fileName, final String contentType, final Long size) {
-        super(url, user, correlationId, permissions, fileName, contentType, size);
+            final String fileName, final String contentType, final Long size, final Date validUntil) {
+        super(url, user, correlationId, permissions, fileName, contentType, size, validUntil);
         this.entityId = entityId;
         this.status = status;
         this.statusReason = statusReason;
