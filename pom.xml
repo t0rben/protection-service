@@ -29,17 +29,17 @@
       <azure.version>2.0.5</azure.version>
       <azure.adal4j.version>1.6.3</azure.adal4j.version>
    </properties>
-   
+
    <repositories>
-    <repository>
-        <id>spring-milestones</id>
-        <name>Spring Milestones</name>
-        <url>https://repo.spring.io/libs-milestone</url>
-        <snapshots>
+      <repository>
+         <id>spring-milestones</id>
+         <name>Spring Milestones</name>
+         <url>https://repo.spring.io/libs-milestone</url>
+         <snapshots>
             <enabled>false</enabled>
-        </snapshots>
-    </repository>
-</repositories>
+         </snapshots>
+      </repository>
+   </repositories>
 
    <dependencies>
       <dependency>
@@ -82,15 +82,15 @@
          <groupId>javax.xml.bind</groupId>
          <artifactId>jaxb-api</artifactId>
       </dependency>
-       <dependency>
-        <groupId>org.springframework.cloud</groupId>
-        <artifactId>spring-cloud-stream</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>org.springframework.cloud</groupId>
-        <artifactId>spring-cloud-starter-stream-rabbit</artifactId>
-    </dependency>
-      
+      <dependency>
+         <groupId>org.springframework.cloud</groupId>
+         <artifactId>spring-cloud-stream</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.springframework.cloud</groupId>
+         <artifactId>spring-cloud-starter-stream-rabbit</artifactId>
+      </dependency>
+
       <dependency>
          <groupId>org.projectlombok</groupId>
          <artifactId>lombok</artifactId>
@@ -118,6 +118,11 @@
          <version>3.1.1</version>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.springframework.cloud</groupId>
+         <artifactId>spring-cloud-stream-test-support</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <dependencyManagement>
@@ -135,7 +140,7 @@
             <version>Fishtown.RC1</version>
             <type>pom</type>
             <scope>import</scope>
-        </dependency>
+         </dependency>
       </dependencies>
    </dependencyManagement>
 

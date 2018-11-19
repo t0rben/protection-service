@@ -35,15 +35,11 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.protection.controller.model.ProtectionRequestPost;
-import com.microsoft.protection.data.AzureStorageRepository;
 import com.microsoft.protection.data.model.ProtectionRequest;
 import com.microsoft.protection.data.model.ProtectionRequest.Status;
 
 @AutoConfigureMockMvc
 public class ProtectionRequestControllerTest extends AbstractTest {
-
-    @MockBean
-    private AzureStorageRepository azureStorageRepository;
 
     @MockBean
     private ProtectionHandler mipHandler;

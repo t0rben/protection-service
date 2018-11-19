@@ -24,19 +24,19 @@ import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.mock.web.MockMultipartFile;
 
 import com.google.common.io.Files;
-import com.microsoft.protection.data.AzureStorageRepository;
 import com.microsoft.protection.data.model.ProtectionRequest;
 import com.microsoft.protection.mip.MipSdkCaller;
 
 public class MipHandlerTest extends AbstractTest {
-    @MockBean
-    private AzureStorageRepository azureStorageRepository;
 
     @MockBean
     private AadHandler aadHandler;
 
     @MockBean
     private MipSdkCaller mipSdkCaller;
+
+    @MockBean
+    private ProtectionPublisher protectionPublisher;
 
     @Autowired
     private ProtectionHandler mipHandler;
@@ -76,6 +76,7 @@ public class MipHandlerTest extends AbstractTest {
         // verify
         verify(aadHandler, timeout(2_000)).getAccessToken();
         verify(azureStorageRepository, timeout(2_000)).store(testProtectFile, "application/pdf", test.getId());
+        verify(protectionPublisher, timeout(2_000)).orderComplete(test);
 
         final ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
         verify(mipSdkCaller, timeout(2_000)).protect(eq(test), fileCaptor.capture(), eq(testAccessToken));
@@ -96,6 +97,7 @@ public class MipHandlerTest extends AbstractTest {
         // verify
         verify(aadHandler, timeout(2_000)).getAccessToken();
         verify(azureStorageRepository, timeout(2_000)).store(testProtectFile, "application/pdf", test.getId());
+        verify(protectionPublisher, timeout(2_000)).orderComplete(test);
 
         final ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
         verify(mipSdkCaller, timeout(2_000)).protect(eq(test), fileCaptor.capture(), eq(testAccessToken));

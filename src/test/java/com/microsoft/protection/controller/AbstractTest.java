@@ -11,11 +11,13 @@ import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.microsoft.protection.ProtectionServiceConfiguration;
+import com.microsoft.protection.data.AzureStorageRepository;
 import com.microsoft.protection.data.ProtectionRequestRepository;
 import com.microsoft.protection.data.model.ProtectionRequest;
 import com.microsoft.protection.data.model.ProtectionRequest.Right;
@@ -25,6 +27,8 @@ import com.microsoft.protection.data.model.ProtectionRequest.Right;
 @ContextConfiguration(classes = { ProtectionServiceConfiguration.class })
 @TestPropertySource(locations = "classpath:/test.yml")
 public abstract class AbstractTest {
+    @MockBean
+    protected AzureStorageRepository azureStorageRepository;
 
     @Autowired
     protected ProtectionRequestRepository protectionRequestRepository;
