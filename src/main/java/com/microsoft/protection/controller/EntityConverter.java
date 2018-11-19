@@ -14,7 +14,11 @@ import com.microsoft.protection.data.AzureStorageRepository;
 import com.microsoft.protection.data.model.ProtectionRequest;
 import com.microsoft.protection.data.model.ProtectionRequest.Status;
 
-public class EntityConverter {
+public final class EntityConverter {
+    private EntityConverter() {
+        // Utility class
+    }
+
     static ProtectionRequestGet toProtectionRequestGetWithSelfLink(final ProtectionRequest entity,
             final AzureStorageRepository azureStorageRepository) {
 
