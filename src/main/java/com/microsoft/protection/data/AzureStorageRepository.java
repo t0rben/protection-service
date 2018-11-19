@@ -48,26 +48,32 @@ public class AzureStorageRepository {
 
     }
 
-    public void store(final File file, final String contentType, final String id)
-            throws IOException, URISyntaxException, StorageException {
+    public void store(final File file, final String contentType, final String id) {
 
         final CloudBlockBlob blob = getBlob(id, file.getName());
 
         log.info("Storing file {} with length {} to Azure Storage container {}", id, file.length(),
                 properties.getStorageContainerName());
 
-        if (blob.exists()) {
-            log.warn("Artifact {} already exists on Azure Storage container {}, don't need to upload twice", id,
-                    properties.getStorageContainerName());
-            return;
+        try {
+            if (blob.exists()) {
+                log.warn("Artifact {} already exists on Azure Storage container {}, don't need to upload twice", id,
+                        properties.getStorageContainerName());
+                return;
+            }
+        } catch (final StorageException e) {
+            throw new FileStorageFailedException("Failed to verify if file already exists", e);
         }
 
         // Creating blob and uploading file to it
         blob.getProperties().setContentType(contentType);
-        blob.uploadFromFile(file.getPath());
+        try {
+            blob.uploadFromFile(file.getPath());
+        } catch (StorageException | IOException e) {
+            throw new FileStorageFailedException("Failed to upload file", e);
+        }
 
-        log.debug("Artifact {} stored on Azure Storage container {} with  server side Etag {}", id,
-                blob.getContainer().getName(), blob.getProperties().getEtag());
+        log.debug("Artifact {} stored on Azure Storage c server side Etag {}", id, blob.getProperties().getEtag());
     }
 
     private CloudBlockBlob getBlob(final String id, final String fileName) {
