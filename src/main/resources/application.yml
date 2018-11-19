@@ -1,14 +1,39 @@
 spring:
-    servlet:
-        multipart:
-            max-file-size: -1
-            max-request-size : -1
+  cloud:
+    stream:
+      bindings:
+        output:
+          destination: protection.requests
+          binder: local_rabbit
+          content-type: application/json
+      rabbit:
+        bindings:
+          output:
+            producer:
+              exchangeType: fanout
+      binder:
+        connection-name-prefix: protection-service-
+      binders:
+        local_rabbit:
+          type: rabbit
+          environment:
+            spring:
+              rabbitmq:
+                host: localhost
+                port: 5672
+                username: guest
+                password: guest
+                virtual-host: /
+  servlet:
+    multipart:
+      max-file-size: -1
+      max-request-size: -1
 
 com:
-    microsoft:
-        protection:
-            aad:
-                tenant: 
-                client-id: 
-                client-secret: 
-            user: 
+  microsoft:
+    protection:
+      aad:
+        tenant:
+        client-id:
+        client-secret:
+      user:

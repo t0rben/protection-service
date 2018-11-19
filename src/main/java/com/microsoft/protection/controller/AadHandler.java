@@ -74,6 +74,7 @@ public class AadHandler {
             rwLock.writeLock().unlock();
         }
 
+        rwLock.readLock().lock();
         try {
             return Optional.ofNullable(accessToken);
         } finally {

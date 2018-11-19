@@ -39,7 +39,7 @@ public class MipHandlerTest extends AbstractTest {
     private MipSdkCaller mipSdkCaller;
 
     @Autowired
-    private MipHandler mipHandler;
+    private ProtectionHandler mipHandler;
 
     @LocalServerPort
     private int randomServerPort;

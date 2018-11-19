@@ -4,16 +4,12 @@
  */
 package com.microsoft.protection.controller;
 
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
 import org.springframework.data.domain.PageRequest;
-import org.springframework.hateoas.Link;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -35,7 +31,6 @@ import com.microsoft.protection.controller.model.ResponseList;
 import com.microsoft.protection.data.AzureStorageRepository;
 import com.microsoft.protection.data.ProtectionRequestRepository;
 import com.microsoft.protection.data.model.ProtectionRequest;
-import com.microsoft.protection.data.model.ProtectionRequest.Status;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +44,7 @@ public class ProtectionRequestController {
 
     private final ProtectionRequestRepository protectionRequestRepository;
 
-    private final MipHandler mipHandler;
+    private final ProtectionHandler mipHandler;
 
     private final AzureStorageRepository azureStorageRepository;
 
@@ -58,7 +53,8 @@ public class ProtectionRequestController {
     @ResponseStatus(HttpStatus.OK)
     public List<ProtectionRequestGet> getAllRequests() {
         return new ResponseList<>(protectionRequestRepository.findAll(PageRequest.of(0, LIMIT)).stream()
-                .map(this::toProtectionRequestGet).collect(Collectors.toList()));
+                .map(entity -> EntityConverter.toProtectionRequestGetWithSelfLink(entity, azureStorageRepository))
+                .collect(Collectors.toList()));
     }
 
     @PostMapping("/upload")
@@ -78,7 +74,7 @@ public class ProtectionRequestController {
         final ProtectionRequest stored = protectionRequestRepository.save(toCreate);
         mipHandler.protect(stored, file);
 
-        return toProtectionRequestGet(stored);
+        return EntityConverter.toProtectionRequestGetWithSelfLink(stored, azureStorageRepository);
     }
 
     @PostMapping
@@ -96,12 +92,13 @@ public class ProtectionRequestController {
         final ProtectionRequest stored = protectionRequestRepository.save(toCreate);
         mipHandler.protect(stored);
 
-        return toProtectionRequestGet(stored);
+        return EntityConverter.toProtectionRequestGetWithSelfLink(stored, azureStorageRepository);
     }
 
     @GetMapping(value = "/{id}", produces = { MediaTypes.HAL_JSON_VALUE, MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<ProtectionRequestGet> getRequest(@PathVariable final String id) {
-        return protectionRequestRepository.findById(id).map(entity -> ResponseEntity.ok(toProtectionRequestGet(entity)))
+        return protectionRequestRepository.findById(id).map(
+                entity -> ResponseEntity.ok(EntityConverter.toProtectionRequestGetWithSelfLink(entity, azureStorageRepository)))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
@@ -118,20 +115,4 @@ public class ProtectionRequestController {
 
     }
 
-    private ProtectionRequestGet toProtectionRequestGet(final ProtectionRequest entity) {
-
-        final ProtectionRequestGet response = new ProtectionRequestGet(entity.getUrl(), entity.getUser(),
-                entity.getCorrelationId(), entity.getRightsAsString(), entity.getId(), entity.getStatus().toString(),
-                entity.getStatusReason(), entity.getFileName(), entity.getContentType(), entity.getSize(),
-                entity.getValidUntil());
-
-        if (Status.COMPLETE == entity.getStatus()) {
-            response.add(new Link(azureStorageRepository.getUri(entity.getId(), entity.getFileName()).toString(),
-                    "download"));
-        }
-
-        response.add(linkTo(methodOn(ProtectionRequestController.class).getRequest(entity.getId())).withSelfRel());
-
-        return response;
-    }
 }

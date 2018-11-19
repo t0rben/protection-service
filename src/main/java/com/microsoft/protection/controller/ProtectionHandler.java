@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
 @Slf4j
-public class MipHandler {
+public class ProtectionHandler {
 
     private static final int READ_TIMEOUT_MS = 2_000;
     private static final int CONNECT_TIMEOUT_MS = 2_000;
@@ -40,6 +40,7 @@ public class MipHandler {
     private final AzureStorageRepository azureStorageRepository;
     private final AadHandler aadHandler;
     private final MipSdkCaller mipSdkCaller;
+    private final ProtectionPublisher protectionPublisher;
 
     @Async
     void protect(final ProtectionRequest request, final MultipartFile file) {
@@ -84,13 +85,13 @@ public class MipHandler {
             final File protectedFile = mipSdkCaller.protect(request, toProtect, accessToken);
             azureStorageRepository.store(protectedFile, request.getContentType(), request.getId());
             request.setStatus(Status.COMPLETE);
+
         } catch (final Exception e) {
             log.error("Failed to protect " + request, e);
             request.setStatus(Status.ERROR);
             request.setStatusReason(e.getMessage());
         }
-
-        protectionRequestRepository.save(request);
+        protectionPublisher.orderComplete(protectionRequestRepository.save(request));
     }
 
     private static void verifySize(final ProtectionRequest request, final long size) {

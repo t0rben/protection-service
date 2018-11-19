@@ -46,7 +46,7 @@ public class ProtectionRequestControllerTest extends AbstractTest {
     private AzureStorageRepository azureStorageRepository;
 
     @MockBean
-    private MipHandler mipHandler;
+    private ProtectionHandler mipHandler;
 
     @Autowired
     private MockMvc mvc;

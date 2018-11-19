@@ -12,6 +12,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cloud.stream.annotation.EnableBinding;
+import org.springframework.cloud.stream.messaging.Source;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
@@ -24,7 +26,8 @@ import org.springframework.scheduling.concurrent.ConcurrentTaskExecutor;
 import com.microsoft.applicationinsights.core.dependencies.googlecommon.util.concurrent.ThreadFactoryBuilder;
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.protection.controller.AadHandler;
-import com.microsoft.protection.controller.MipHandler;
+import com.microsoft.protection.controller.ProtectionHandler;
+import com.microsoft.protection.controller.ProtectionPublisher;
 import com.microsoft.protection.controller.ProtectionRequestController;
 import com.microsoft.protection.data.AzureStorageRepository;
 import com.microsoft.protection.data.ProtectionRequestRepository;
@@ -34,6 +37,7 @@ import com.microsoft.protection.mip.MipSdkCaller;
 import lombok.extern.slf4j.Slf4j;
 
 @EnableAutoConfiguration
+@EnableBinding(Source.class)
 @Configuration
 @Slf4j
 @EnableConfigurationProperties(ProtectionServiceProperties.class)
@@ -48,16 +52,22 @@ public class ProtectionServiceConfiguration {
 
     @Bean
     ProtectionRequestController protectionRequestController(
-            final ProtectionRequestRepository protectionRequestRepository, final MipHandler mipHandler,
+            final ProtectionRequestRepository protectionRequestRepository, final ProtectionHandler mipHandler,
             final AzureStorageRepository azureStorageRepository) {
         return new ProtectionRequestController(protectionRequestRepository, mipHandler, azureStorageRepository);
     }
 
     @Bean
-    MipHandler mipHandler(final ProtectionRequestRepository protectionRequestRepository,
+    ProtectionPublisher protectionPublisher(final Source source, final AzureStorageRepository azureStorageRepository) {
+        return new ProtectionPublisher(source, azureStorageRepository);
+    }
+
+    @Bean
+    ProtectionHandler mipHandler(final ProtectionRequestRepository protectionRequestRepository,
             final AzureStorageRepository azureStorageRepository, final AadHandler aadHandler,
-            final MipSdkCaller mipSdkCaller) {
-        return new MipHandler(protectionRequestRepository, azureStorageRepository, aadHandler, mipSdkCaller);
+            final MipSdkCaller mipSdkCaller, final ProtectionPublisher protectionPublisher) {
+        return new ProtectionHandler(protectionRequestRepository, azureStorageRepository, aadHandler, mipSdkCaller,
+                protectionPublisher);
     }
 
     @Bean

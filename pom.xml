@@ -29,12 +29,19 @@
       <azure.version>2.0.5</azure.version>
       <azure.adal4j.version>1.6.3</azure.adal4j.version>
    </properties>
+   
+   <repositories>
+    <repository>
+        <id>spring-milestones</id>
+        <name>Spring Milestones</name>
+        <url>https://repo.spring.io/libs-milestone</url>
+        <snapshots>
+            <enabled>false</enabled>
+        </snapshots>
+    </repository>
+</repositories>
 
    <dependencies>
-      <dependency>
-         <groupId>org.springframework.boot</groupId>
-         <artifactId>spring-boot-starter-amqp</artifactId>
-      </dependency>
       <dependency>
          <groupId>org.springframework.boot</groupId>
          <artifactId>spring-boot-starter-data-mongodb</artifactId>
@@ -75,6 +82,15 @@
          <groupId>javax.xml.bind</groupId>
          <artifactId>jaxb-api</artifactId>
       </dependency>
+       <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-stream</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-stream-rabbit</artifactId>
+    </dependency>
+      
       <dependency>
          <groupId>org.projectlombok</groupId>
          <artifactId>lombok</artifactId>
@@ -113,6 +129,13 @@
             <type>pom</type>
             <scope>import</scope>
          </dependency>
+         <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-stream-dependencies</artifactId>
+            <version>Fishtown.RC1</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
       </dependencies>
    </dependencyManagement>
 
