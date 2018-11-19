@@ -10,6 +10,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -26,15 +28,22 @@ import lombok.extern.slf4j.Slf4j;
 public class AadHandler {
 
     private static final int BUFFER_MILLISECONDS = 10_000;
-    private volatile String accessToken;
-    private volatile long accessTokenExpiresAfter;
+    private String accessToken;
+    private long accessTokenExpiresAfter;
+
+    private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     private final ThreadPoolExecutor threadPoolExecutor;
     private final ProtectionServiceProperties protectionServiceProperties;
 
     public Optional<String> getAccessToken() {
-        if (accessToken != null && System.currentTimeMillis() < (accessTokenExpiresAfter - BUFFER_MILLISECONDS)) {
-            return Optional.of(accessToken);
+        rwLock.readLock().lock();
+        try {
+            if (accessToken != null && System.currentTimeMillis() < (accessTokenExpiresAfter - BUFFER_MILLISECONDS)) {
+                return Optional.of(accessToken);
+            }
+        } finally {
+            rwLock.readLock().unlock();
         }
 
         try {
@@ -51,6 +60,7 @@ public class AadHandler {
                             null)
                     .get(5, TimeUnit.SECONDS);
 
+            rwLock.writeLock().lock();
             accessToken = response.getAccessToken();
             accessTokenExpiresAfter = TimeUnit.MILLISECONDS.convert(response.getExpiresAfter(), TimeUnit.SECONDS);
         } catch (MalformedURLException | ExecutionException | TimeoutException e) {
@@ -60,8 +70,14 @@ public class AadHandler {
             log.warn("Interrupted!", e);
             // Restore interrupted state...
             Thread.currentThread().interrupt();
+        } finally {
+            rwLock.writeLock().unlock();
         }
 
-        return Optional.ofNullable(accessToken);
+        try {
+            return Optional.ofNullable(accessToken);
+        } finally {
+            rwLock.readLock().unlock();
+        }
     }
 }
