@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.google.common.base.Joiner;
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.protection.controller.model.ProtectionRequestGet;
 import com.microsoft.protection.controller.model.ProtectionRequestPost;
@@ -38,6 +37,7 @@ import com.microsoft.protection.controller.model.ResponseList;
 import com.microsoft.protection.data.AzureStorageRepository;
 import com.microsoft.protection.data.ProtectionRequestRepository;
 import com.microsoft.protection.data.model.ProtectionRequest;
+import com.microsoft.protection.data.model.ProtectionRequest.Status;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +47,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/v1/protection")
 @Slf4j
 public class ProtectionRequestController {
-    private static final Joiner JOINER = Joiner.on(",").skipNulls();
+    private static final int LIMIT = 500;
 
     private final ProtectionRequestRepository protectionRequestRepository;
 
@@ -59,8 +59,8 @@ public class ProtectionRequestController {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public List<ProtectionRequestGet> getAllRequests() {
-        return new ResponseList<>(protectionRequestRepository.findAll(PageRequest.of(0, 500)).stream()
-                .map(entity -> toProtectionRequestGet(entity)).collect(Collectors.toList()));
+        return new ResponseList<>(protectionRequestRepository.findAll(PageRequest.of(0, LIMIT)).stream()
+                .map(this::toProtectionRequestGet).collect(Collectors.toList()));
     }
 
     @PostMapping("/upload")
@@ -104,7 +104,7 @@ public class ProtectionRequestController {
     @GetMapping(value = "/{id}", produces = { MediaTypes.HAL_JSON_VALUE, MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<ProtectionRequestGet> getRequest(@PathVariable final String id) {
         return protectionRequestRepository.findById(id).map(entity -> ResponseEntity.ok(toProtectionRequestGet(entity)))
-                .orElse(ResponseEntity.status(404).body(null));
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
     @DeleteMapping("/{id}")
@@ -126,11 +126,10 @@ public class ProtectionRequestController {
     private ProtectionRequestGet toProtectionRequestGet(final ProtectionRequest entity) {
 
         final ProtectionRequestGet response = new ProtectionRequestGet(entity.getUrl(), entity.getUser(),
-                entity.getCorrelationId(), JOINER.join(entity.getRights()), entity.getId(),
-                entity.getStatus().toString(), entity.getStatusReason(), entity.getFileName(), entity.getContentType(),
-                entity.getSize());
+                entity.getCorrelationId(), entity.getRightsAsString(), entity.getId(), entity.getStatus().toString(),
+                entity.getStatusReason(), entity.getFileName(), entity.getContentType(), entity.getSize());
 
-        if (ProtectionRequest.Status.COMPLETE.equals(entity.getStatus())) {
+        if (Status.COMPLETE == entity.getStatus()) {
             try {
                 response.add(new Link(azureStorageRepository.getUri(entity.getId(), entity.getFileName()).toString(),
                         "download"));

@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class FileSampleMipSdkCaller implements MipSdkCaller {
+    private static final int CLI_CALL_TIMEOUT_SECONDS = 60;
     private final ProtectionServiceProperties protectionServiceProperties;
 
     @Override
@@ -35,13 +36,17 @@ public class FileSampleMipSdkCaller implements MipSdkCaller {
 
         final String sdkCall = buildMipSdkCall(request, toProtect, accessToken);
 
-        String output;
+        String output = null;
         try {
             output = new ProcessExecutor().commandSplit(sdkCall).destroyOnExit()
-                    .redirectError(Slf4jStream.ofCaller().asError()).readOutput(true).timeout(60, TimeUnit.MINUTES)
-                    .execute().outputUTF8();
-        } catch (InvalidExitValueException | IOException | InterruptedException | TimeoutException e) {
+                    .redirectError(Slf4jStream.ofCaller().asError()).readOutput(true)
+                    .timeout(CLI_CALL_TIMEOUT_SECONDS, TimeUnit.MINUTES).execute().outputUTF8();
+        } catch (InvalidExitValueException | IOException | TimeoutException e) {
             throw new ProtectionFailedException("Failed to protect " + toProtect, e);
+        } catch (final InterruptedException e) {
+            log.warn("Interrupted!", e);
+            // Restore interrupted state...
+            Thread.currentThread().interrupt();
         }
 
         if (!StringUtils.hasText(output)) {

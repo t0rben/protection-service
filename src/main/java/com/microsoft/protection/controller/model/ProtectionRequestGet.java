@@ -38,9 +38,4 @@ public class ProtectionRequestGet extends ProtectionRequestPost {
         this.statusReason = statusReason;
     }
 
-    // FIXME implement
-    // @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy
-    // hh:mm:ss")
-    // private String validUntil;
-
 }

@@ -42,6 +42,10 @@ import lombok.extern.slf4j.Slf4j;
 @EnableHypermediaSupport(type = { HypermediaType.HAL })
 public class ProtectionServiceConfiguration {
 
+    private static final int MAX_POOL_SIZE = 10;
+    private static final int KEEP_ALIVE_SECONDS = 60;
+    private static final int CORE_POOL_SIZE = 2;
+
     @Bean
     ProtectionRequestController protectionRequestController(
             final ProtectionRequestRepository protectionRequestRepository, final MipHandler mipHandler,
@@ -85,8 +89,9 @@ public class ProtectionServiceConfiguration {
     @Bean
     ThreadPoolExecutor threadPoolExecutor() {
         final BlockingQueue<Runnable> blockingQueue = new ArrayBlockingQueue<>(100);
-        return new ThreadPoolExecutor(2, 10, 60, TimeUnit.SECONDS, blockingQueue,
-                new ThreadFactoryBuilder().setNameFormat("executor-pool-%d").build(), new PoolSizeExceededPolicy());
+        return new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_POOL_SIZE, KEEP_ALIVE_SECONDS, TimeUnit.SECONDS,
+                blockingQueue, new ThreadFactoryBuilder().setNameFormat("executor-pool-%d").build(),
+                new PoolSizeExceededPolicy());
     }
 
     private static class PoolSizeExceededPolicy extends CallerRunsPolicy {

@@ -32,7 +32,7 @@ public class ProtectionServiceProperties {
     @Getter
     @Setter
     public static class AAD {
-        // FIXME document
+        // TODO document
         @NotBlank
         private String tenant;
 

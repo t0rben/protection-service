@@ -5,12 +5,10 @@
 package com.microsoft.protection.controller;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
@@ -36,6 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MipHandler {
 
+    private static final int READ_TIMEOUT_MS = 2_000;
+    private static final int CONNECT_TIMEOUT_MS = 2_000;
     private final ProtectionRequestRepository protectionRequestRepository;
     private final AzureStorageRepository azureStorageRepository;
     private final AadHandler aadHandler;
@@ -55,8 +55,7 @@ public class MipHandler {
         copyAndprotect(request, null);
     }
 
-    private long copyMultipart(final MultipartFile file, final File toProtect)
-            throws IOException, FileNotFoundException {
+    private static long copyMultipart(final MultipartFile file, final File toProtect) throws IOException {
         try (final InputStream upload = file.getInputStream()) {
             try (OutputStream temp = new FileOutputStream(toProtect)) {
                 return ByteStreams.copy(upload, temp);
@@ -94,7 +93,7 @@ public class MipHandler {
         protectionRequestRepository.save(request);
     }
 
-    private void verifySize(final ProtectionRequest request, final long size) {
+    private static void verifySize(final ProtectionRequest request, final long size) {
         if (request.getSize() == null) {
             request.setSize(size);
         } else if (request.getSize() != size) {
@@ -103,12 +102,11 @@ public class MipHandler {
         }
     }
 
-    private long copyFromUrl(final ProtectionRequest request, final File toProtect)
-            throws IOException, MalformedURLException {
+    private static long copyFromUrl(final ProtectionRequest request, final File toProtect) throws IOException {
 
         final URLConnection connection = new URL(request.getUrl()).openConnection();
-        connection.setConnectTimeout(2_000);
-        connection.setReadTimeout(2_000);
+        connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
+        connection.setReadTimeout(READ_TIMEOUT_MS);
         try (InputStream in = connection.getInputStream(); OutputStream out = FileUtils.openOutputStream(toProtect)) {
             return IOUtils.copyLarge(in, out);
         }

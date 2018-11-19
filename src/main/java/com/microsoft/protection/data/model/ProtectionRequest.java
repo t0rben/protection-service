@@ -17,7 +17,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 
 import lombok.Getter;
@@ -31,7 +30,6 @@ import lombok.ToString;
 public class ProtectionRequest extends BaseEntity {
 
     private static final Splitter SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings();
-    private static final Joiner JOINER = Joiner.on(",").skipNulls();
 
     private static final long serialVersionUID = 1L;
 
@@ -61,7 +59,7 @@ public class ProtectionRequest extends BaseEntity {
 
     private Long size;
 
-    // FIXME: implement including introducing an extra status
+    // TODO: implement including introducing an extra status
     // private Date validUntil
 
     public void setRightsAsString(final String rights) {
@@ -77,7 +75,7 @@ public class ProtectionRequest extends BaseEntity {
     }
 
     public String getRightsAsString() {
-        return JOINER.join(rights);
+        return rights.stream().map(Enum::toString).collect(Collectors.joining(","));
     }
 
     public void setFileName(final String fileName) {
